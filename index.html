@@ -1,7 +1,152 @@
-<!DOCTYPE html>
 <html>
-<body>
-<h1>Super Mario World</h1>
-<p>These are the leaderboards.</p>
-</body>
+  <head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.css">
+  </head>
+
+  <body>
+    <style>
+      body {
+        font-family: 'Roboto', sans-serif;
+        line-height: 1.5;
+      }
+      
+      .container {
+        max-width: 1200px;
+        margin: 1em auto 0 auto;
+      }
+
+      main, header {
+        margin: 0em 2em 0 2em;
+      }
+      
+      main {
+        display: flex;
+        flex-direction: row;
+      }
+      
+      #filter {
+        flex: 0 0 25%;
+        margin-right: 1em;
+      }
+
+      #runs {
+        flex: 1;
+        margin-left: 1em;
+      }
+    </style>
+
+    <div class="container">
+      <header>
+        <h1>SMW Leaderboard</h1>
+        <h2>11 Exit</h2>
+      </header>
+
+      <main>
+        <div id="filter">
+          <!--
+          <fieldset>
+            <legend>Cape</legend>
+            <input type="checkbox" name="cape" value="0" id="cape_0" /><label for="cape_0">Cape</label><br />
+            <input type="checkbox" name="cape" value="1" id="cape_1" /><label for="cape_1">No Cape</label>
+          </fieldset>
+          
+          <fieldset>
+            <legend>Glitches</legend>
+            <input type="checkbox" name="glitches" value="0" id="glitches_0" /><label for="glitches_0">No Glitches</label><br />
+            <input type="checkbox" name="glitches" value="1" id="glitches_1" /><label for="glitches_1">Orb</label><br />
+            <input type="checkbox" name="glitches" value="2" id="glitches_2" /><label for="glitches_2">Cloud</label>
+          </fieldset>
+          
+          <fieldset>
+            <legend>Players</legend>
+            <input type="checkbox" name="players" value="0" id="players_0" /><label for="players_0">1 Player</label><br />
+            <input type="checkbox" name="players" value="1" id="players_1" /><label for="players_1">2 Player</label>
+          </fieldset>
+          
+          <fieldset>
+            <legend>Game Region</legend>
+            <input type="checkbox" name="region" value="0" id="region_0" /><label for="region_0">USA/NTSC</label><br />
+            <input type="checkbox" name="region" value="1" id="region_1" /><label for="region_1">EUR/PAL</label><br />
+            <input type="checkbox" name="region" value="2" id="region_2" /><label for="region_2">JPN/NTSC</label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Console</legend>
+            <input type="checkbox" name="console" value="0" id="console_0" /><label for="console_0">SNES</label><br />
+            <input type="checkbox" name="console" value="1" id="console_1" /><label for="console_1">WiiVC</label><br />
+            <input type="checkbox" name="console" value="2" id="console_2" /><label for="console_2">Emulator</label>
+          </fieldset>
+          -->
+          This is where I'd put some filtering options...if I had them.
+        </div>
+        
+        <div id="runs">
+          <table id="runs_table">
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th>Time</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+          </table>
+        </div>
+      </main>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script>
+    <script>
+      $(function(){
+        const urls_11exit = [
+          'https://www.speedrun.com/api/v1/leaderboards/pd0wq31e/category/n2y1y72o', // 11 Exit
+          'https://www.speedrun.com/api/v1/leaderboards/pd0wq31e/category/mkeyen26', // 11 Exit, No Cape
+          'https://www.speedrun.com/api/v1/leaderboards/268n5y6p/category/9kvp0gek', // 11 Exit, Co-Op
+        ];
+
+        $.when.apply(null, ajax_objects(urls_11exit)).then(function(data) {
+          // handle all the data coming back from the ajax calls
+          var runs = [], player_mapping = {};
+          for(var jqr of arguments) {
+            runs = runs.concat(jqr[0].data.runs);
+            for(var player of jqr[0].data.players.data) {
+              if(player.rel === "guest") {
+                continue;
+              }
+              player_mapping[player.id] = player.names.international;
+            }
+          }
+
+          // format some kind of name identifier
+          for(var run of runs) {
+            var disp = [];
+            for(var player of run.run.players) {
+              disp.push(player.rel === "guest" ? player.name : player_mapping[player.id]);
+            }
+            run.player_disp = disp.join(" & ");
+          }
+
+          $('#runs_table').DataTable({
+            data: runs,
+            columns: [
+              { data: 'player_disp' },
+              { data: 'run.times.primary_t' },
+              { data: 'run.date' }
+            ],
+            order: [[ 1, "asc" ]]
+          });
+        });
+
+        function ajax_objects(urls) {
+          var deferreds = [];
+          for(var board of urls) {
+            deferreds.push($.ajax({ url: board + "?embed=players" }));
+          }
+          return deferreds;
+        }
+      });
+    </script>
+  </body>
 </html>

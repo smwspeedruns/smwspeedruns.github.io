@@ -1,0 +1,23 @@
+@import url("//bootswatch.com/4/slate/bootstrap.min.css");
+@import url("//fonts.googleapis.com/css?family=Khand");
+@import url("//cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css");
+
+body, html { width: 100%; min-height: 100%; padding: 0; margin: 0; }
+body {
+	font-family: "Khand", sans-serif;
+	background: #001820 url("../images/bg.gif") fixed repeat-x top center/cover;
+	color: #FFF;
+}
+
+.container {
+	max-width: 960px;
+}
+
+header { margin-top: 10px; }
+
+[id^="subcat"] { display: none; }
+
+table td, table th { background: rgba(0,0,0,.5); vertical-align: middle !important; }
+
+td.time { font-size: 110% }
+td.time sub { bottom: auto }

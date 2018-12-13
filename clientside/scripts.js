@@ -56,7 +56,8 @@ jQuery(document).ready(function($){
 				return players.join(' & '); 
 			} },
 			{ data: 'run.times.primary_t', className: "text-center time", render: function(data, type, row, meta){ return secs2time(data * 1000); } },
-			{ data: 'run.date', className: "text-center", render: function(data, type, row, meta){ return data ? (new Date(data)).toLocaleDateString('pt-br') : 'Unavailable'; } }
+			{ data: 'run.date', className: "text-center", render: function(data, type, row, meta){ return data ? (new Date(data)).toLocaleDateString('pt-br') : 'Unavailable'; } },
+			{ data: 'run.videos.links', className: "text-center video", render: function(data, type, row, meta){ return data ? `<a href="${data[0].uri}" target="_blank"><i class="fas fa-video"></i></a>` : '<i class="fas fa-video-slash"></i>'; }  }
 		],
 		order: [[ 0, "asc" ]]
 	});

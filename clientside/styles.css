@@ -1,6 +1,7 @@
 @import url("//bootswatch.com/4/slate/bootstrap.min.css");
 @import url("//fonts.googleapis.com/css?family=Khand");
 @import url("//cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css");
+@import url("//use.fontawesome.com/releases/v5.6.1/css/all.css");
 
 body, html { width: 100%; min-height: 100%; padding: 0; margin: 0; }
 body {
@@ -15,9 +16,12 @@ body {
 
 header { margin-top: 10px; }
 
+[id^="subcat"] button, [id^="maincat"] button { margin: 4px; }
 [id^="subcat"] { display: none; }
 
 table td, table th { background: rgba(0,0,0,.5); vertical-align: middle !important; }
 
 td.time { font-size: 110% }
 td.time sub { bottom: auto }
+td.video .fa-video { color: #0D0 }
+td.video .fa-video-slash { color: #D00 }

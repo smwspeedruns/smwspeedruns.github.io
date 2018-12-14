@@ -20,17 +20,18 @@ header { margin-top: 10px; }
 [id^="subcat"] { display: none; }
 
 table td, table th { background: rgba(0,0,0,.5); vertical-align: middle !important; cursor: pointer; }
-
-td.time, time { font-size: 110%; }
 td.time { background: rgba(0,0,0,.7); }
-tbody tr:nth-child(1) td.time { color: yellow }
-tbody tr:nth-child(2) td.time { color: silver }
-tbody tr:nth-child(3) td.time { color: orange }
-td.time sub, time sub { bottom: auto }
 td.video .fa-video { color: #0D0 }
 td.video .fa-video-slash { color: #D00 }
 
+time { font-size: 110%; }
+time.place-1 { color: #FFDF00 } time.place-2 { color: #D3D3D3 } time.place-3 { color: #CD7F32 }
+time:before { font-family: "Font Awesome 5 Free"; font-weight: 900; }
+time.place-1:before, time.place-2:before, time.place-3:before { content: "\f091  " !important; }
+sub { bottom: auto }
+
 #run_info .modal-dialog { max-width: 640px; }
+#run_info time:before { content: "\f017  "; }
 
 .nickname {
 	display: inline-block;

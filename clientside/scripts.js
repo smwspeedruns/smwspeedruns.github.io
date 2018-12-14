@@ -1,4 +1,4 @@
-var player_mapping = {}, platform_mapping = {}, region_mapping = {}, datatable = null;
+var player_mapping = {}, platform_mapping = {}, region_mapping = {}, first_time = 0, datatable = null;
 
 jQuery(document).ready(function($){
 	var md = window.markdownit();
@@ -24,6 +24,7 @@ jQuery(document).ready(function($){
 			$('#runs_table').data('info', data);
 
 			var runs = data.runs;
+			first_time = data.runs[0].run.times.primary_t;
 			for(var player of data.players.data){
 				if(player.rel === "guest") continue;
 				player_mapping[player.id] = player;
@@ -48,13 +49,20 @@ jQuery(document).ready(function($){
 	datatable = $('#runs_table').DataTable({
 		paging: false,
 		columns: [
-			{ data: 'place', className: "text-center" },
-			{ data: 'run.players', render: render_players },
+			{ data: 'place', orderable: false, className: "text-center" },
+			{ data: 'run.players', orderable: false, render: render_players },
 			{ data: 'run.times.primary_t', className: "text-center time", render: render_time },
+			{ data: 'run.times.primary_t', className: "text-center time", orderable: false, visible: false, render: render_difftime },
 			{ data: 'run.date', className: "text-center", render: render_date },
-			{ data: 'run.videos.links', className: "text-center video", render: render_video }
+			{ data: 'run.videos.links', className: "text-center video", orderable: false, render: render_video }
 		],
-		order: [[ 0, "asc" ]]
+		order: [[ 2, "asc" ]]
+	});
+
+
+	$('#timediff').on('change', function(){
+		var col = datatable.column(3);
+		col.visible(! $(this).prop('checked'));
 	});
 
 	$('#runs_table tbody').on('click', 'tr', function(){
@@ -65,7 +73,7 @@ jQuery(document).ready(function($){
         $('.category', run_info).text(cat.category.data.name);
 
         $('.run .nick', run_info).html(render_players(data.run.players));
-        $('.run time', run_info).html(render_time(data.run.times.primary_t));
+        $('.run .time', run_info).html(render_time(data.run.times.primary_t, 'display', data));
         $('.comment', run_info).html(md.render(data.run.comment ? data.run.comment : ''));
         
         var video_url = false;
@@ -92,7 +100,7 @@ jQuery(document).ready(function($){
         $('.played .system', run_info).text(platform.name);
         $('.played .region', run_info).html(region ? render_flag(region.name.substr(0,2), region.name) : '').toggle(region != undefined);
         $('.played date', run_info).html(render_date(data.run.date));
-        $('.played .emu', run_info).toggle(data.run.system.emulator == true);
+        $('.played .emu', run_info).toggle(data.run.system.emulated);
 
         $('.verifier .nick', run_info).html(render_player(player_mapping[data.run.status.examiner]));
         $('.verifier date', run_info).html(render_date(data.run.status["verify-date"]));
@@ -100,16 +108,28 @@ jQuery(document).ready(function($){
 
     });
 
-	function render_video(video, type=null, row=null, meta=null){ return video ? `<a href="${video[0].uri}" target="_blank"><i class="fas fa-video"></i></a>` : '<i class="fas fa-video-slash"></i>'; } 
-    function render_date(date, type=null, row=null, meta=null){ return date ? (new Date(date)).toLocaleDateString('pt-br') : 'Unavailable'; }
-	function render_time(time, type=null, row=null, meta=null){ return (row && row.place <= 3 ? '<i class="fas fa-trophy"></i> ' : '') + secs2time(time * 1000); }
-	function render_flag(code, title){ return `<img src="//www.speedrun.com/images/flags/${code.toLowerCase()}.png" height="12" title="${title}" />`; }
+	function render_video(video, type='display', row=null, meta=null){
+		return video ? `<a href="${video[0].uri}" target="_blank"><i class="fas fa-video"></i></a>` : '<i class="fas fa-video-slash"></i>';
+	} 
+    function render_date(date, type='display', row=null, meta=null){
+    	return type == 'display' ? (date ? (new Date(date)).toLocaleDateString('pt-br') : 'Unavailable') : date;
+    }
+	function render_time(time, type='display', row=null, meta=null){
+		return type == 'display' ? `<time class="place-${row.place}">${secs2time(time * 1000)}</time>` : time * 1000;
+	}
+	function render_difftime(time, type='display', row=null, meta=null){
+		var diff = (time * 1000) - (first_time * 1000);
+		return diff > 0 ? `<span style="color:green">+${secs2time(diff)}</span>` : '-';
+	}
+	function render_flag(code, title){
+		return `<img src="//www.speedrun.com/images/flags/${code.toLowerCase()}.png" height="12" title="${title}" />`;
+	}
 	function render_player(player){
-		var location = player.location ? render_flag(player.location.country.code, player.location.country.names.intenational) : '';
+		var location = player.location ? render_flag(player.location.country.code, player.location.country.names.international) : '';
 		var color = player['name-style']['color-from'] ? `style="background-image: -webkit-linear-gradient(left, ${player['name-style']['color-from'].dark}, ${player['name-style']['color-to'].dark})"` : '';
 		return `${location} <a href="${player.weblink}" class="nickname" ${color} target="_blank">${player.names.international}</a>`;
 	}
-	function render_players(data, type=null, row=null, meta=null){
+	function render_players(data, type='display', row=null, meta=null){
 		var players = [];
 		for(var p of data){
 			var player = player_mapping[p.id];
@@ -133,7 +153,7 @@ jQuery(document).ready(function($){
 				num = num.substr(num.length - (unit == 'ms' ? 3 : 2));
 			}
 			if(unit == 'ms') ms = num;
-			else if(num > 0 || high_num){
+			else if(num > 0 || high_num || unit == 's'){
 				high_num = true;
 				time.push(num);
 			}

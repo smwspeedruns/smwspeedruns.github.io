@@ -1,4 +1,4 @@
-var player_mapping = {};
+var player_mapping = {}, platform_mapping = {}, region_mapping = {}, datatable = null;
 
 jQuery(document).ready(function($){
 	var md = window.markdownit();
@@ -6,7 +6,6 @@ jQuery(document).ready(function($){
 		var btn = $(this);
 		var data = btn.data();
 		var filter = data.filter ? '&' + data.filter : '';
-		var datatable = $('#runs_table').DataTable();
 
 		$('button[data-board]', btn.parent()).removeClass('btn-success').addClass('btn-secondary');
 		btn.toggleClass('btn-secondary btn-success');
@@ -22,12 +21,18 @@ jQuery(document).ready(function($){
 		datatable.draw();
 		$.get(`https://www.speedrun.com/api/v1/leaderboards/${data.board}/category/${data.category}?embed=players,category,regions,platforms${filter}`, function(response) {
 			data = response.data;
+			$('#runs_table').data('info', data);
+
 			var runs = data.runs;
-			for(var player of data.players.data) {
-				if(player.rel === "guest") {
-					continue;
-				}
+			for(var player of data.players.data){
+				if(player.rel === "guest") continue;
 				player_mapping[player.id] = player;
+			}
+			for(var region of data.regions.data){
+				region_mapping[region.id] = region;
+			}
+			for(var platform of data.platforms.data){
+				platform_mapping[platform.id] = platform;
 			}
 
 			var category = data.category.data;
@@ -40,27 +45,80 @@ jQuery(document).ready(function($){
 		}, 'json');
 	})
 
-	$('#runs_table').DataTable({
+	datatable = $('#runs_table').DataTable({
 		paging: false,
 		columns: [
 			{ data: 'place', className: "text-center" },
-			{ data: 'run.players', render: function(data, type, row, meta){
-				var players = [];
-				for(var p of data){
-					var player = player_mapping[p.id];
-					var location = player && player.location ? `<img src="//www.speedrun.com/images/flags/${player.location.country.code}.png" height="12" title="${player.location.country.names.intenational}" />` : '';
-					players.push(
-						p.rel === "guest" ? p.name : `${location} <a href="${player.weblink}" target="_blank">${player.names.international}</a>`
-					);
-				}
-				return players.join(' & '); 
-			} },
-			{ data: 'run.times.primary_t', className: "text-center time", render: function(data, type, row, meta){ return secs2time(data * 1000); } },
-			{ data: 'run.date', className: "text-center", render: function(data, type, row, meta){ return data ? (new Date(data)).toLocaleDateString('pt-br') : 'Unavailable'; } },
-			{ data: 'run.videos.links', className: "text-center video", render: function(data, type, row, meta){ return data ? `<a href="${data[0].uri}" target="_blank"><i class="fas fa-video"></i></a>` : '<i class="fas fa-video-slash"></i>'; }  }
+			{ data: 'run.players', render: render_players },
+			{ data: 'run.times.primary_t', className: "text-center time", render: render_time },
+			{ data: 'run.date', className: "text-center", render: render_date },
+			{ data: 'run.videos.links', className: "text-center video", render: render_video }
 		],
 		order: [[ 0, "asc" ]]
 	});
+
+	$('#runs_table tbody').on('click', 'tr', function(){
+        var data = datatable.row(this).data(); console.log(data);
+        var cat = $('#runs_table').data('info');
+        var run_info = $('#run_info');
+
+        $('.category', run_info).text(cat.category.data.name);
+
+        $('.run .nick', run_info).html(render_players(data.run.players));
+        $('.run time', run_info).html(render_time(data.run.times.primary_t));
+        $('.comment', run_info).html(md.render(data.run.comment ? data.run.comment : ''));
+        
+        var video_url = false;
+        if(data.run.videos) for(var link of data.run.videos.links){
+	        var video = link.uri.match(/(youtu\.be|youtube\.com|twitch\.tv|nicovideo\.jp).*\/(?:watch\?v=)?([^\/]+)$/);
+	        if(video) switch(video[1]){
+	    		case 'youtu.be':
+	    		case 'youtube.com':
+	    			video_url = `//www.youtube.com/embed/${video[2]}`;
+	    		break;
+	    		case 'twitch.tv':
+	    			video_url = `//player.twitch.tv/?video=v${video[2]}&autoplay=false&time=0`;
+	    		break;
+	    		case 'nicovideo.jp':
+	    			video_url = `//embed.nicovideo.jp/watch/${video[2]}?oldScript=1&referer=&from=0&allowProgrammaticFullScreen=1`;
+	    		break;
+	    	}
+	    }
+        $('.video iframe', run_info).attr('src', video_url)
+        $('.video', run_info).toggle(video_url != false);
+
+        var platform = platform_mapping[data.run.system.platform];
+        var region = region_mapping[data.run.system.region];
+        $('.played .system', run_info).text(platform.name);
+        $('.played .region', run_info).html(region ? render_flag(region.name.substr(0,2), region.name) : '').toggle(region != undefined);
+        $('.played date', run_info).html(render_date(data.run.date));
+        $('.played .emu', run_info).toggle(data.run.system.emulator == true);
+
+        $('.verifier .nick', run_info).html(render_player(player_mapping[data.run.status.examiner]));
+        $('.verifier date', run_info).html(render_date(data.run.status["verify-date"]));
+        run_info.modal();
+
+    });
+
+	function render_video(video, type=null, row=null, meta=null){ return video ? `<a href="${video[0].uri}" target="_blank"><i class="fas fa-video"></i></a>` : '<i class="fas fa-video-slash"></i>'; } 
+    function render_date(date, type=null, row=null, meta=null){ return date ? (new Date(date)).toLocaleDateString('pt-br') : 'Unavailable'; }
+	function render_time(time, type=null, row=null, meta=null){ return (row && row.place <= 3 ? '<i class="fas fa-trophy"></i> ' : '') + secs2time(time * 1000); }
+	function render_flag(code, title){ return `<img src="//www.speedrun.com/images/flags/${code.toLowerCase()}.png" height="12" title="${title}" />`; }
+	function render_player(player){
+		var location = player.location ? render_flag(player.location.country.code, player.location.country.names.intenational) : '';
+		var color = player['name-style']['color-from'] ? `style="background-image: -webkit-linear-gradient(left, ${player['name-style']['color-from'].dark}, ${player['name-style']['color-to'].dark})"` : '';
+		return `${location} <a href="${player.weblink}" class="nickname" ${color} target="_blank">${player.names.international}</a>`;
+	}
+	function render_players(data, type=null, row=null, meta=null){
+		var players = [];
+		for(var p of data){
+			var player = player_mapping[p.id];
+			players.push(
+				p.rel === "guest" ? p.name : render_player(player)
+			);
+		}
+		return players.join(' & '); 
+	}
 
 	function secs2time(miliseconds){
 		var units = {'h': 3600000, 'm': 60000, 's': 1000, 'ms': 1}, ms = 0, time = [], high_num = false;

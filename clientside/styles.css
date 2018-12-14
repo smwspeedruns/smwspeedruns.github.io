@@ -1,11 +1,11 @@
 @import url("//bootswatch.com/4/slate/bootstrap.min.css");
-@import url("//fonts.googleapis.com/css?family=Khand");
+@import url("//fonts.googleapis.com/css?family=Open+Sans");
 @import url("//cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css");
 @import url("//use.fontawesome.com/releases/v5.6.1/css/all.css");
 
 body, html { width: 100%; min-height: 100%; padding: 0; margin: 0; }
 body {
-	font-family: "Khand", sans-serif;
+	font-family: "Open Sans", sans-serif;
 	background: #001820 url("../images/bg.gif") fixed repeat-x top center/cover;
 	color: #FFF;
 }
@@ -19,9 +19,24 @@ header { margin-top: 10px; }
 [id^="subcat"] button, [id^="maincat"] button { margin: 4px; }
 [id^="subcat"] { display: none; }
 
-table td, table th { background: rgba(0,0,0,.5); vertical-align: middle !important; }
+table td, table th { background: rgba(0,0,0,.5); vertical-align: middle !important; cursor: pointer; }
 
-td.time { font-size: 110% }
-td.time sub { bottom: auto }
+td.time, time { font-size: 110%; }
+td.time { background: rgba(0,0,0,.7); }
+tbody tr:nth-child(1) td.time { color: yellow }
+tbody tr:nth-child(2) td.time { color: silver }
+tbody tr:nth-child(3) td.time { color: orange }
+td.time sub, time sub { bottom: auto }
 td.video .fa-video { color: #0D0 }
 td.video .fa-video-slash { color: #D00 }
+
+#run_info .modal-dialog { max-width: 640px; }
+
+.nickname {
+	display: inline-block;
+	vertical-align: middle;
+	background: #FFF;
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	font-weight: bold;
+}

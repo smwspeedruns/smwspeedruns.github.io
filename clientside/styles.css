@@ -5,8 +5,8 @@
 
 body, html { width: 100%; min-height: 100%; padding: 0; margin: 0; }
 body {
-	font-family: "Open Sans", sans-serif;
-	background: #001820 url("../images/bg.gif") fixed repeat-x top center/cover;
+	font-family: "Tahoma", sans-serif;
+	background: #323232 url("../images/bg.png") fixed repeat-x top center/cover;
 	color: #FFF;
 }
 
